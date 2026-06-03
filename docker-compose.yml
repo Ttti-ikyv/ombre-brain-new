@@ -1,0 +1,54 @@
+# ============================================================
+# Ombre Brain Docker Compose
+# Docker Compose 配置
+#
+# Usage / 使用：
+#   1. Create .env: echo "OMBRE_API_KEY=your-key" > .env
+#      创建 .env 文件
+#   2. docker-compose up -d
+#   3. docker compose logs tunnel (for public URL / 查看公网地址)
+# ============================================================
+
+services:
+  ombre-brain:
+    build: .
+    container_name: ombre-brain
+    restart: unless-stopped
+    ports:
+      - "18001:8000"                        # Local debug port (optional) / 本地调试端口
+    environment:
+      - OMBRE_API_KEY=${OMBRE_API_KEY}      # From .env file / 从 .env 文件读取
+      - OMBRE_TRANSPORT=streamable-http     # Claude.ai requires streamable-http
+      - OMBRE_BUCKETS_DIR=/data             # Container-internal bucket path / 容器内路径
+    volumes:
+      # Mount your Obsidian vault (or any host directory) for persistent storage.
+      # Set OMBRE_HOST_VAULT_DIR in your .env (or in the Dashboard "Storage" panel)
+      # to point at the host folder you want mounted into the container at /data.
+      # 挂载你的 Obsidian 仓库（或任意宿主机目录）做持久化存储。
+      # 在 .env（或 Dashboard 的「存储」面板）中设置 OMBRE_HOST_VAULT_DIR
+      # 指向你希望挂载到容器 /data 的宿主机目录。
+      #
+      # Examples / 示例:
+      #   OMBRE_HOST_VAULT_DIR=/path/to/your/Obsidian Vault/Ombre Brain
+      #   OMBRE_HOST_VAULT_DIR=~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault/Ombre Brain
+      - ${OMBRE_HOST_VAULT_DIR:-./buckets}:/data
+      - ./config.yaml:/app/config.yaml
+
+  # Cloudflare Tunnel (optional) — expose to public internet
+  # Cloudflare Tunnel（可选）— 暴露到公网
+  # Configure your own credentials under ~/.cloudflared/
+  # 在 ~/.cloudflared/ 下放你自己的凭证
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: ombre-tunnel
+    restart: unless-stopped
+    command: >
+      tunnel --no-autoupdate --protocol http2
+      --config /etc/cloudflared/config.yml
+      --proxy-keepalive-timeout 300s
+      --proxy-connection-timeout 300s
+      run
+    volumes:
+      - ~/.cloudflared:/etc/cloudflared
+    depends_on:
+      - ombre-brain

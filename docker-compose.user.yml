@@ -1,0 +1,38 @@
+# ============================================================
+# Ombre Brain — 用户快速部署版
+# User Quick Deploy (pre-built image, no local build needed)
+#
+# 使用方法 / Usage:
+#   1. 创建 .env: echo "OMBRE_API_KEY=your-key" > .env
+#   2. 按需修改下面的 volumes 路径
+#   3. docker compose -f docker-compose.user.yml up -d
+# ============================================================
+
+services:
+  ombre-brain:
+    image: p0luz/ombre-brain:latest
+    container_name: ombre-brain
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - OMBRE_API_KEY=${OMBRE_API_KEY}
+      - OMBRE_TRANSPORT=streamable-http
+      - OMBRE_BUCKETS_DIR=/data
+      # --- Model override (optional) ---
+      # If you use Gemini instead of DeepSeek, set these in your .env:
+      # 如使用 Gemini 而非 DeepSeek，在 .env 里加：
+      #   OMBRE_DEHYDRATION_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+      #   OMBRE_DEHYDRATION_MODEL=gemini-2.5-flash-lite
+      #   OMBRE_EMBEDDING_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+      - OMBRE_DEHYDRATION_BASE_URL=${OMBRE_DEHYDRATION_BASE_URL:-}
+      - OMBRE_DEHYDRATION_MODEL=${OMBRE_DEHYDRATION_MODEL:-}
+      - OMBRE_EMBEDDING_BASE_URL=${OMBRE_EMBEDDING_BASE_URL:-}
+      - OMBRE_EMBEDDING_MODEL=${OMBRE_EMBEDDING_MODEL:-}
+    volumes:
+      # 改成你的 Obsidian Vault 路径，或保持 ./buckets 用本地目录
+      # Change to your Obsidian Vault path, or keep ./buckets for local storage
+      - ./buckets:/data
+      # (Optional) Mount custom config to override model / API settings:
+      # （可选）挂载自定义配置，覆盖模型和 API 设置：
+      # - ./config.yaml:/app/config.yaml

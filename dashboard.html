@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ombre Brain</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FDFCF0;
+    --bg-gradient: radial-gradient(ellipse at 30% 20%, #FDFCF0 0%, #EDE4D3 60%, #E2D1B3 100%);
+    --surface: rgba(255, 255, 255, 0.45);
+    --surface-solid: #F7F2E8;
+    --border: rgba(180, 165, 140, 0.3);
+    --border-strong: rgba(160, 140, 110, 0.5);
+    --text: #3A3530;
+    --text-dim: #8A8070;
+    --text-light: #B0A590;
+    --accent: #2F4F4F;
+    --accent-light: #3D6363;
+    --accent-glow: rgba(47, 79, 79, 0.12);
+    --positive: #4A7C59;
+    --negative: #8B4A4A;
+    --warning: #9A7B4F;
+    --shadow-light: rgba(255, 252, 240, 0.7);
+    --shadow-dark: rgba(163, 148, 120, 0.4);
+    --shadow-dark-subtle: rgba(163, 148, 120, 0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .header {
+    padding: 28px 40px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    backdrop-filter: blur(12px);
+    background: rgba(253, 252, 240, 0.7);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+  }
+  .header .stats {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 300;
+    letter-spacing: 0.3px;
+  }
+  .search-bar {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
+  .search-bar input {
+    background: var(--surface);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-family: inherit;
+    font-size: 13px;
+    width: 260px;
+    transition: all 0.3s ease;
+    box-shadow: inset 2px 2px 4px var(--shadow-dark-subtle), inset -2px -2px 4px var(--shadow-light);
+  }
+  .search-bar input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow), inset 2px 2px 4px var(--shadow-dark-subtle), inset -2px -2px 4px var(--shadow-light);
+  }
+  .search-bar input::placeholder { color: var(--text-light); }
+
+  .tabs {
+    display: flex;
+    padding: 0 40px;
+    gap: 4px;
+    background: rgba(253, 252, 240, 0.5);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 14px 22px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.25s ease;
+    letter-spacing: 0.3px;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 500;
+  }
+
+  .content { padding: 32px 40px; }
+
+  .filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 8px 18px;
+    font-size: 12px;
+    font-weight: 400;
+    border: none;
+    border-radius: 24px;
+    background: linear-gradient(145deg, #FAF6ED, #EDE4D3);
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 4px 8px var(--shadow-dark-subtle), -4px -4px 8px var(--shadow-light);
+  }
+  .filter-btn:hover {
+    color: var(--accent);
+    box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+    transform: translateY(-1px);
+  }
+  .filter-btn:active {
+    transform: translateY(0);
+    box-shadow: inset 2px 2px 5px var(--shadow-dark-subtle), inset -2px -2px 5px var(--shadow-light);
+  }
+  .filter-btn.active {
+    color: #F0EDE4;
+    background: linear-gradient(145deg, var(--accent-light), var(--accent));
+    box-shadow: inset 3px 3px 6px rgba(0,0,0,0.2), inset -2px -2px 4px rgba(255,255,255,0.05);
+  }
+
+  .bucket-list { display: flex; flex-direction: column; gap: 8px; }
+  .bucket-row {
+    display: grid;
+    grid-template-columns: 32px 200px 100px 80px 60px 100px 1fr;
+    gap: 12px;
+    padding: 14px 20px;
+    border-radius: 16px;
+    font-size: 13px;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: var(--surface);
+    border: 1px solid transparent;
+    box-shadow: 4px 4px 10px var(--shadow-dark-subtle), -4px -4px 10px var(--shadow-light);
+  }
+  .bucket-row:hover {
+    border-color: var(--border);
+    box-shadow: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
+    transform: translateY(-1px);
+  }
+  .bucket-row .icon { font-size: 16px; text-align: center; }
+  .bucket-row .name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+  }
+  .bucket-row .domain {
+    color: var(--text-dim);
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bucket-row .emotion { font-size: 11px; }
+  .bucket-row .score {
+    font-size: 12px;
+    text-align: right;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .bucket-row .time {
+    font-size: 11px;
+    color: var(--text-light);
+    text-align: right;
+  }
+  .bucket-row .preview {
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .v-bar {
+    width: 44px;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, var(--negative), var(--warning), var(--positive));
+    position: relative;
+    display: inline-block;
+  }
+  .v-dot {
+    position: absolute;
+    top: -3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--surface-solid);
+    border: 2px solid var(--accent);
+    transform: translateX(-50%);
+    box-shadow: 0 1px 3px var(--shadow-dark-subtle);
+  }
+
+  .detail-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 440px;
+    height: 100vh;
+    background: var(--surface-solid);
+    border-left: 1px solid var(--border);
+    padding: 32px 28px;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+    box-shadow: -8px 0 24px var(--shadow-dark-subtle);
+  }
+  .detail-panel.open { transform: translateX(0); }
+  .detail-panel .close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 20px;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .detail-panel .close-btn:hover {
+    background: var(--accent-glow);
+    color: var(--accent);
+  }
+  .detail-panel h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--accent);
+    padding-right: 40px;
+  }
+  .detail-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .detail-meta .field { font-size: 12px; }
+  .detail-meta .field label {
+    color: var(--text-light);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .detail-content {
+    font-size: 13px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    background: var(--surface);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    max-height: 50vh;
+    overflow-y: auto;
+    box-shadow: inset 3px 3px 6px var(--shadow-dark-subtle), inset -3px -3px 6px var(--shadow-light);
+  }
+
+  .config-section {
+    margin-bottom: 28px;
+    padding: 24px;
+    background: var(--surface);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 6px 6px 14px var(--shadow-dark-subtle), -6px -6px 14px var(--shadow-light);
+  }
+  .config-section h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 16px;
+    letter-spacing: 0.3px;
+  }
+  .config-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .config-row label {
+    width: 110px;
+    font-size: 12px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+  .config-row input, .config-row select {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 13px;
+    transition: all 0.25s ease;
+    box-shadow: inset 2px 2px 4px var(--shadow-dark-subtle), inset -2px -2px 4px var(--shadow-light);
+  }
+  .config-row input:focus, .config-row select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow), inset 2px 2px 4px var(--shadow-dark-subtle);
+  }
+
+  .btn-primary {
+    padding: 12px 28px;
+    background: linear-gradient(145deg, var(--accent-light), var(--accent));
+    color: #F0EDE4;
+    border: none;
+    border-radius: 24px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 6px 6px 12px rgba(40, 65, 65, 0.25), -4px -4px 10px var(--shadow-light), inset 0 1px 0 rgba(255,255,255,0.1);
+    letter-spacing: 0.4px;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.08), transparent);
+    pointer-events: none;
+  }
+  .btn-primary:hover {
+    box-shadow: 8px 8px 16px rgba(40, 65, 65, 0.3), -5px -5px 12px var(--shadow-light), inset 0 1px 0 rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: inset 3px 3px 6px rgba(0,0,0,0.2), inset -2px -2px 4px rgba(255,255,255,0.05);
+  }
+  .btn-secondary {
+    padding: 12px 28px;
+    background: linear-gradient(145deg, #FAF6ED, #EDE4D3);
+    color: var(--accent);
+    border: none;
+    border-radius: 24px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 5px 5px 10px var(--shadow-dark-subtle), -5px -5px 10px var(--shadow-light);
+  }
+  .btn-secondary:hover {
+    box-shadow: 7px 7px 14px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+    transform: translateY(-2px);
+  }
+  .btn-secondary:active {
+    transform: translateY(0);
+    box-shadow: inset 3px 3px 6px var(--shadow-dark-subtle), inset -2px -2px 4px var(--shadow-light);
+  }
+
+  #network-canvas {
+    width: 100%;
+    height: calc(100vh - 180px);
+    background: var(--bg);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: inset 4px 4px 10px var(--shadow-dark-subtle), inset -4px -4px 10px var(--shadow-light);
+  }
+  .network-legend {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 1px 3px var(--shadow-dark-subtle);
+  }
+
+  .loading {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 60px;
+    font-size: 14px;
+    font-weight: 300;
+  }
+
+  .breath-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .breath-controls input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 13px;
+    box-shadow: inset 2px 2px 4px var(--shadow-dark-subtle), inset -2px -2px 4px var(--shadow-light);
+  }
+  .breath-controls input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow), inset 2px 2px 4px var(--shadow-dark-subtle);
+  }
+  .breath-controls button {
+    background: linear-gradient(145deg, var(--accent-light), var(--accent));
+    color: #F0EDE4;
+    border: none;
+    padding: 12px 26px;
+    border-radius: 24px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 6px 6px 12px rgba(40, 65, 65, 0.25), -4px -4px 10px var(--shadow-light), inset 0 1px 0 rgba(255,255,255,0.1);
+    position: relative;
+    overflow: hidden;
+  }
+  .breath-controls button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.08), transparent);
+    pointer-events: none;
+  }
+  .breath-controls button:hover {
+    box-shadow: 8px 8px 16px rgba(40, 65, 65, 0.3), -5px -5px 12px var(--shadow-light);
+    transform: translateY(-2px);
+  }
+  .breath-controls button:active {
+    transform: translateY(0);
+    box-shadow: inset 3px 3px 6px rgba(0,0,0,0.2), inset -2px -2px 4px rgba(255,255,255,0.05);
+  }
+  .breath-controls label {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .breath-info {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+    line-height: 1.8;
+    padding: 16px 20px;
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+  }
+  .breath-info code {
+    background: var(--accent-glow);
+    padding: 2px 8px;
+    border-radius: 6px;
+    color: var(--accent);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+  }
+  .score-row {
+    display: grid;
+    grid-template-columns: 32px 180px 1fr 60px;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    align-items: center;
+    transition: all 0.2s ease;
+    margin-bottom: 4px;
+  }
+  .score-row:hover {
+    background: var(--surface);
+    box-shadow: 3px 3px 8px var(--shadow-dark-subtle), -3px -3px 8px var(--shadow-light);
+  }
+  .score-row .rank { color: var(--text-light); font-size: 12px; text-align: center; font-weight: 500; }
+  .score-row .name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .score-bars { display: flex; gap: 4px; align-items: center; }
+  .score-bar-group { display: flex; flex-direction: column; gap: 1px; flex: 1; }
+  .score-bar-track {
+    height: 5px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .score-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+  .score-bar-label {
+    font-size: 9px;
+    color: var(--text-light);
+    display: flex;
+    justify-content: space-between;
+  }
+  .score-final { font-size: 14px; font-weight: 600; text-align: right; }
+  .score-pass { color: var(--positive); }
+  .score-fail { color: var(--text-light); }
+
+  .breath-flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px;
+    overflow-x: auto;
+    box-shadow: 4px 4px 10px var(--shadow-dark-subtle), -4px -4px 10px var(--shadow-light);
+  }
+  .flow-step {
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    text-align: center;
+    min-width: 90px;
+    box-shadow: inset 2px 2px 4px var(--shadow-dark-subtle), inset -2px -2px 4px var(--shadow-light);
+  }
+  .flow-step.active { border-color: var(--accent); color: var(--accent); }
+  .flow-arrow { color: var(--text-light); font-size: 16px; }
+
+  @media (max-width: 768px) {
+    .header { padding: 20px; flex-wrap: wrap; }
+    .header h1 { font-size: 22px; }
+    .search-bar { margin-left: 0; width: 100%; }
+    .search-bar input { width: 100%; }
+    .tabs { padding: 0 16px; overflow-x: auto; }
+    .content { padding: 20px 16px; }
+    .bucket-row {
+      grid-template-columns: 28px 1fr 60px;
+      gap: 8px;
+      padding: 12px 16px;
+    }
+    .bucket-row .domain,
+    .bucket-row .emotion,
+    .bucket-row .time,
+    .bucket-row .preview { display: none; }
+    .detail-panel { width: 100%; }
+    .config-row { flex-wrap: wrap; }
+    .config-row label { width: 100%; }
+    .breath-flow { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>◐ Ombre Brain</h1>
+  <span class="stats" id="stats">loading...</span>
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="搜索记忆…" />
+  </div>
+  <button onclick="doLogout()" title="退出登录" style="margin-left:12px;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;">退出</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="list">记忆桶</div>
+  <div class="tab" data-tab="breath">Breath 模拟</div>
+  <div class="tab" data-tab="network">记忆网络</div>
+  <div class="tab" data-tab="config">配置</div>
+  <div class="tab" data-tab="import">导入</div>
+  <div class="tab" data-tab="settings">设置</div>
+</div>
+
+<div class="content" id="list-view">
+  <div class="filters" id="filters"></div>
+  <div class="bucket-list" id="bucket-list">
+    <div class="loading">加载中…</div>
+  </div>
+</div>
+
+<div class="content" id="breath-view" style="display:none">
+  <div class="breath-flow" id="breath-flow">
+    <div class="flow-step" id="fs-input">① 输入<br><small>query / valence / arousal</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step" id="fs-candidates">② 候选池<br><small id="fs-cand-n">— 桶</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step" id="fs-scoring">③ 四维评分<br><small>topic×4 + emotion×2 + time×2.5 + imp×1</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step" id="fs-threshold">④ 阈值过滤<br><small id="fs-thresh-n">≥50 → — 通过</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step" id="fs-sort">⑤ 降序排列<br><small>返回 top N</small></div>
+  </div>
+
+  <div class="breath-controls">
+    <label>Query</label>
+    <input type="text" id="breath-query" placeholder="关键词…" style="width:220px" />
+    <label>Valence</label>
+    <input type="number" id="breath-valence" placeholder="0~1" min="0" max="1" step="0.1" style="width:80px" />
+    <label>Arousal</label>
+    <input type="number" id="breath-arousal" placeholder="0~1" min="0" max="1" step="0.1" style="width:80px" />
+    <button onclick="runBreathDebug()">模拟 Breath</button>
+  </div>
+
+  <div class="breath-info" id="breath-info" style="display:none"></div>
+  <div id="breath-results">
+    <div class="loading">输入 query 后点击「模拟 Breath」查看评分链路</div>
+  </div>
+</div>
+
+<div class="content" id="network-view" style="display:none">
+  <div class="network-legend">
+    <div class="legend-item"><span class="legend-dot" style="background:#2F4F4F"></span> dynamic</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#9A7B4F"></span> permanent</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#8B6A6A"></span> feel</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#B0A590"></span> archived</div>
+  </div>
+  <canvas id="network-canvas"></canvas>
+</div>
+
+<div class="content" id="import-view" style="display:none">
+  <div style="max-width:720px;margin:0 auto;">
+    <h3>历史对话导入</h3>
+    <p style="color:var(--text-dim);font-size:13px;">支持 Claude JSON、ChatGPT 导出、DeepSeek、Markdown、纯文本格式</p>
+
+    <div id="import-upload-zone" style="border:2px dashed var(--border);border-radius:16px;padding:40px;text-align:center;cursor:pointer;margin:20px 0;transition:border-color .2s;">
+      <div style="font-size:32px;margin-bottom:8px;">📁</div>
+      <div>拖拽文件到此处，或 <span style="color:var(--accent);text-decoration:underline;">点击选择</span></div>
+      <input type="file" id="import-file-input" accept=".json,.txt,.md,.jsonl" style="display:none" />
+    </div>
+
+    <div style="margin:12px 0;">
+      <label><input type="checkbox" id="import-preserve-raw" /> 保留原文模式（特殊情境/暗号/仪式性内容不摘要）</label>
+    </div>
+
+    <div id="import-progress" style="display:none;margin:20px 0;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <span id="import-status-text">准备中…</span>
+        <span id="import-progress-text">0/0</span>
+      </div>
+      <div style="background:var(--surface);border-radius:8px;height:12px;overflow:hidden;">
+        <div id="import-progress-bar" style="height:100%;background:var(--accent);border-radius:8px;transition:width .3s;width:0%;"></div>
+      </div>
+      <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:var(--text-dim);">
+        <span>API调用: <b id="import-api-calls">0</b></span>
+        <span>新建: <b id="import-created">0</b></span>
+        <span>合并: <b id="import-merged">0</b></span>
+        <span>原文: <b id="import-raw">0</b></span>
+      </div>
+      <div style="margin-top:12px;">
+        <button id="import-pause-btn" onclick="pauseImport()" style="display:none;">⏸ 暂停</button>
+      </div>
+    </div>
+
+    <div id="import-errors" style="display:none;margin:12px 0;padding:12px;background:var(--surface);border-radius:8px;font-size:12px;color:var(--negative);max-height:120px;overflow-y:auto;"></div>
+
+    <div id="import-results-section" style="margin:20px 0;">
+      <h3>已导入记忆 <button onclick="loadImportResults()" style="font-size:12px;padding:2px 10px;">刷新</button></h3>
+      <div id="import-results-list" style="max-height:500px;overflow-y:auto;"></div>
+    </div>
+
+    <hr style="border-color:var(--border);margin:24px 0;" />
+
+    <h3>高频模式检测</h3>
+    <button onclick="detectPatterns()">🔍 检测高频模式</button>
+    <div id="import-patterns" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<div class="content" id="config-view" style="display:none">
+  <div style="max-width:640px;margin:0 auto;">
+    <div class="config-section">
+      <h3>脱水 / 打标 API</h3>
+      <div class="config-row">
+        <label>Model</label>
+        <input type="text" id="cfg-dehy-model" placeholder="gemini-2.5-flash-lite" />
+      </div>
+      <div class="config-row">
+        <label>Base URL</label>
+        <input type="text" id="cfg-dehy-url" placeholder="https://..." />
+      </div>
+      <div class="config-row">
+        <label>API Key</label>
+        <input type="password" id="cfg-dehy-key" placeholder="当前: 加载中…" />
+      </div>
+      <div style="margin-top:-4px;margin-bottom:12px;padding-left:122px;font-size:11px;color:var(--text-light);">留空不改。不会持久化到 yaml（请用环境变量）</div>
+      <div class="config-row">
+        <label>Max Tokens</label>
+        <input type="number" id="cfg-dehy-maxtokens" min="128" max="8192" />
+      </div>
+      <div class="config-row">
+        <label>Temperature</label>
+        <input type="number" id="cfg-dehy-temp" min="0" max="2" step="0.05" />
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h3>向量化 Embedding</h3>
+      <div class="config-row">
+        <label>启用</label>
+        <select id="cfg-emb-enabled"><option value="true">开启</option><option value="false">关闭</option></select>
+      </div>
+      <div class="config-row">
+        <label>Model</label>
+        <input type="text" id="cfg-emb-model" placeholder="gemini-embedding-001" />
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h3>其他参数</h3>
+      <div class="config-row">
+        <label>合并阈值</label>
+        <input type="number" id="cfg-merge" min="0" max="100" />
+      </div>
+      <div style="margin-top:-4px;padding-left:122px;font-size:11px;color:var(--text-light);">0-100，越高越难合并相似桶</div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:8px;">
+      <button class="btn-primary" onclick="saveConfig(false)">应用（仅运行时）</button>
+      <button class="btn-secondary" onclick="saveConfig(true)">应用并写入 config.yaml</button>
+    </div>
+    <div id="config-status" style="margin-top:16px;font-size:13px;"></div>
+
+    <div class="config-section" style="margin-top:28px;">
+      <h3>系统信息</h3>
+      <div id="config-readonly" style="font-size:13px;color:var(--text-dim);line-height:1.8;">加载中…</div>
+    </div>
+  </div>
+</div>
+
+<div class="detail-panel" id="detail-panel">
+  <button class="close-btn" onclick="closeDetail()">✕</button>
+  <div id="detail-content"></div>
+</div>
+
+<!-- Settings Tab View -->
+<div class="content" id="settings-view" style="display:none">
+  <div style="max-width:580px;margin:0 auto;">
+
+    <div class="config-section">
+      <h3>服务状态</h3>
+      <div id="settings-status" style="font-size:13px;color:var(--text-dim);line-height:2;">加载中…</div>
+      <button onclick="loadSettingsStatus()" style="margin-top:8px;font-size:12px;padding:4px 12px;">刷新状态</button>
+    </div>
+
+    <div class="config-section">
+      <h3>修改密码</h3>
+      <div id="settings-env-notice" style="display:none;font-size:12px;color:var(--warning);margin-bottom:10px;">
+        ⚠ 当前使用环境变量 OMBRE_DASHBOARD_PASSWORD，请直接修改环境变量。
+      </div>
+      <div id="settings-pwd-form">
+        <div class="config-row">
+          <label>当前密码</label>
+          <input type="password" id="settings-current-pwd" placeholder="当前密码" />
+        </div>
+        <div class="config-row">
+          <label>新密码</label>
+          <input type="password" id="settings-new-pwd" placeholder="新密码（至少6位）" />
+        </div>
+        <div class="config-row">
+          <label>确认新密码</label>
+          <input type="password" id="settings-new-pwd2" placeholder="再次输入新密码" />
+        </div>
+        <button class="btn-primary" onclick="changePassword()" style="margin-top:4px;">修改密码</button>
+        <div id="settings-pwd-msg" style="margin-top:10px;font-size:13px;"></div>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h3>宿主机记忆桶目录 (Docker)</h3>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px;line-height:1.6;">
+        设置 docker-compose 中 <code>${OMBRE_HOST_VAULT_DIR:-./buckets}:/data</code> 的宿主机路径。
+        留空则使用项目内 <code>./buckets</code>。
+        <span style="color:var(--warning);">⚠ 修改后需在宿主机执行 <code>docker compose down && docker compose up -d</code> 才会生效。</span>
+      </div>
+      <div class="config-row">
+        <label>路径</label>
+        <input type="text" id="settings-host-vault" placeholder="例如 /Users/you/Obsidian/Ombre Brain" style="flex:1;" />
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+        <button class="btn-primary" onclick="saveHostVault()">保存到 .env</button>
+        <button onclick="loadHostVault()" style="font-size:12px;padding:4px 12px;">重新加载</button>
+        <span id="settings-host-vault-msg" style="font-size:12px;"></span>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h3>账号操作</h3>
+      <button onclick="doLogout()" style="color:var(--negative);border-color:var(--negative);">退出登录</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Auth Overlay -->
+<div id="auth-overlay" style="position:fixed;inset:0;z-index:9999;background:var(--bg-gradient);background-attachment:fixed;display:flex;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:24px;padding:48px 40px;max-width:400px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.12);">
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--accent);margin-bottom:8px;">◐ Ombre Brain</h2>
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:28px;" id="auth-subtitle">验证身份</p>
+
+    <!-- Setup form -->
+    <div id="auth-setup-form" style="display:none;">
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">首次使用，请设置访问密码</p>
+      <input type="password" id="auth-setup-pwd" placeholder="设置密码（至少6位）" style="display:block;width:100%;padding:10px 16px;border:1px solid var(--border);border-radius:10px;background:var(--surface-solid);color:var(--text);font-size:14px;margin-bottom:10px;" />
+      <input type="password" id="auth-setup-pwd2" placeholder="确认密码" style="display:block;width:100%;padding:10px 16px;border:1px solid var(--border);border-radius:10px;background:var(--surface-solid);color:var(--text);font-size:14px;margin-bottom:16px;" onkeydown="if(event.key==='Enter')doSetup()" />
+      <button onclick="doSetup()" style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer;">设置密码并进入</button>
+    </div>
+
+    <!-- Login form -->
+    <div id="auth-login-form" style="display:none;">
+      <input type="password" id="auth-login-pwd" placeholder="输入访问密码" style="display:block;width:100%;padding:10px 16px;border:1px solid var(--border);border-radius:10px;background:var(--surface-solid);color:var(--text);font-size:14px;margin-bottom:16px;" onkeydown="if(event.key==='Enter')doLogin()" />
+      <button onclick="doLogin()" style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer;">登录</button>
+    </div>
+
+    <div id="auth-error" style="color:var(--negative);font-size:13px;margin-top:12px;display:none;"></div>
+  </div>
+</div>
+
+<script>
+// ========================================
+// Auth system / 认证系统
+// ========================================
+async function checkAuth() {
+  try {
+    const resp = await fetch('/auth/status');
+    const data = await resp.json();
+    if (data.setup_needed) {
+      document.getElementById('auth-subtitle').textContent = '首次设置';
+      document.getElementById('auth-setup-form').style.display = 'block';
+    } else if (data.authenticated) {
+      document.getElementById('auth-overlay').style.display = 'none';
+    } else {
+      document.getElementById('auth-subtitle').textContent = '请输入访问密码';
+      document.getElementById('auth-login-form').style.display = 'block';
+    }
+  } catch {
+    document.getElementById('auth-overlay').style.display = 'none';
+  }
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function doSetup() {
+  const p1 = document.getElementById('auth-setup-pwd').value;
+  const p2 = document.getElementById('auth-setup-pwd2').value;
+  if (p1.length < 6) return showAuthError('密码至少6位');
+  if (p1 !== p2) return showAuthError('两次密码不一致');
+  const resp = await fetch('/auth/setup', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({password: p1}) });
+  if (resp.ok) {
+    document.getElementById('auth-overlay').style.display = 'none';
+  } else {
+    const d = await resp.json();
+    showAuthError(d.detail || '设置失败');
+  }
+}
+
+async function doLogin() {
+  const pwd = document.getElementById('auth-login-pwd').value;
+  const resp = await fetch('/auth/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({password: pwd}) });
+  if (resp.ok) {
+    document.getElementById('auth-overlay').style.display = 'none';
+  } else {
+    const d = await resp.json();
+    showAuthError(d.detail || '密码错误');
+  }
+}
+
+async function doLogout() {
+  await fetch('/auth/logout', { method: 'POST' });
+  document.getElementById('auth-setup-form').style.display = 'none';
+  document.getElementById('auth-login-form').style.display = 'none';
+  document.getElementById('auth-login-form').style.display = 'block';
+  document.getElementById('auth-subtitle').textContent = '请输入访问密码';
+  document.getElementById('auth-error').style.display = 'none';
+  document.getElementById('auth-overlay').style.display = 'flex';
+}
+
+async function changePassword() {
+  const currentPwd = document.getElementById('settings-current-pwd').value;
+  const newPwd = document.getElementById('settings-new-pwd').value;
+  const newPwd2 = document.getElementById('settings-new-pwd2').value;
+  const msgEl = document.getElementById('settings-pwd-msg');
+  if (newPwd.length < 6) { msgEl.style.color = 'var(--negative)'; msgEl.textContent = '新密码至少6位'; return; }
+  if (newPwd !== newPwd2) { msgEl.style.color = 'var(--negative)'; msgEl.textContent = '两次密码不一致'; return; }
+  const resp = await authFetch('/auth/change-password', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({current: currentPwd, new: newPwd}) });
+  if (!resp) return;
+  if (resp.ok) {
+    msgEl.style.color = 'var(--accent)'; msgEl.textContent = '密码修改成功';
+    document.getElementById('settings-current-pwd').value = '';
+    document.getElementById('settings-new-pwd').value = '';
+    document.getElementById('settings-new-pwd2').value = '';
+  } else {
+    const d = await resp.json();
+    msgEl.style.color = 'var(--negative)'; msgEl.textContent = d.detail || '修改失败';
+  }
+}
+
+async function loadSettingsStatus() {
+  const el = document.getElementById('settings-status');
+  try {
+    const resp = await authFetch('/api/status');
+    if (!resp) return;
+    const d = await resp.json();
+    const noticeEl = document.getElementById('settings-env-notice');
+    if (d.using_env_password) noticeEl.style.display = 'block';
+    else noticeEl.style.display = 'none';
+    el.innerHTML = `
+      <b>版本</b>：${d.version}<br>
+      <b>Bucket 总数</b>：${(d.buckets?.total ?? 0)} （永久:${d.buckets?.permanent ?? 0} / 动态:${d.buckets?.dynamic ?? 0} / 归档:${d.buckets?.archive ?? 0}）<br>
+      <b>衰减引擎</b>：${d.decay_engine}<br>
+      <b>向量搜索</b>：${d.embedding_enabled ? '已启用' : '未启用'}<br>
+    `;
+  } catch(e) {
+    el.textContent = '加载失败: ' + e;
+  }
+  // Also refresh the host-vault input whenever the settings tab is loaded.
+  loadHostVault();
+}
+
+async function loadHostVault() {
+  const input = document.getElementById('settings-host-vault');
+  const msg = document.getElementById('settings-host-vault-msg');
+  if (!input) return;
+  msg.textContent = '';
+  msg.style.color = 'var(--text-dim)';
+  try {
+    const resp = await authFetch('/api/host-vault');
+    if (!resp) return;
+    const d = await resp.json();
+    input.value = d.value || '';
+    if (d.source === 'env') {
+      msg.textContent = '当前由进程环境变量提供（修改 .env 不会立即覆盖）';
+      msg.style.color = 'var(--warning)';
+    } else if (d.source === 'file') {
+      msg.textContent = '当前来自 ' + (d.env_file || '.env');
+    } else {
+      msg.textContent = '尚未设置（默认使用 ./buckets）';
+    }
+  } catch(e) {
+    msg.style.color = 'var(--negative)';
+    msg.textContent = '加载失败: ' + e;
+  }
+}
+
+async function saveHostVault() {
+  const input = document.getElementById('settings-host-vault');
+  const msg = document.getElementById('settings-host-vault-msg');
+  if (!input) return;
+  const value = input.value.trim();
+  msg.textContent = '保存中…';
+  msg.style.color = 'var(--text-dim)';
+  try {
+    const resp = await authFetch('/api/host-vault', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({value})
+    });
+    if (!resp) return;
+    const d = await resp.json();
+    if (resp.ok) {
+      msg.style.color = 'var(--accent)';
+      msg.textContent = '已保存 → ' + (d.env_file || '.env') + '（需重启容器生效）';
+    } else {
+      msg.style.color = 'var(--negative)';
+      msg.textContent = d.error || '保存失败';
+    }
+  } catch(e) {
+    msg.style.color = 'var(--negative)';
+    msg.textContent = '保存失败: ' + e;
+  }
+}
+
+// authFetch: wraps fetch, shows auth overlay on 401
+async function authFetch(url, options) {
+  const resp = await fetch(url, options);
+  if (resp.status === 401) {
+    doLogout();
+    return null;
+  }
+  return resp;
+}
+
+// ========================================
+
+const BASE = location.origin;
+let allBuckets = [];
+let currentFilter = 'all';
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const target = tab.dataset.tab;
+    document.getElementById('list-view').style.display = target === 'list' ? '' : 'none';
+    document.getElementById('breath-view').style.display = target === 'breath' ? '' : 'none';
+    document.getElementById('network-view').style.display = target === 'network' ? '' : 'none';
+    document.getElementById('config-view').style.display = target === 'config' ? '' : 'none';
+    document.getElementById('import-view').style.display = target === 'import' ? '' : 'none';
+    document.getElementById('settings-view').style.display = target === 'settings' ? '' : 'none';
+    if (target === 'network') loadNetwork();
+    if (target === 'config') loadConfig();
+    if (target === 'import') { pollImportStatus(); loadImportResults(); }
+    if (target === 'settings') loadSettingsStatus();
+  });
+});
+
+let searchTimer;
+document.getElementById('search-input').addEventListener('input', (e) => {
+  clearTimeout(searchTimer);
+  const q = e.target.value.trim();
+  searchTimer = setTimeout(() => {
+    if (q) searchBuckets(q);
+    else renderBuckets(allBuckets);
+  }, 300);
+});
+
+async function loadBuckets() {
+  try {
+    const res = await fetch(BASE + '/api/buckets');
+    const data = await res.json();
+    if (!res.ok || !Array.isArray(data)) {
+      throw new Error((data && data.error) ? data.error : `HTTP ${res.status}`);
+    }
+    allBuckets = data;
+    updateStats();
+    buildFilters();
+    renderBuckets(allBuckets);
+  } catch (e) {
+    document.getElementById('bucket-list').innerHTML = '<div class="loading">加载失败: ' + e.message + '</div>';
+  }
+}
+
+function updateStats() {
+  const total = allBuckets.length;
+  const pinned = allBuckets.filter(b => b.pinned).length;
+  const feels = allBuckets.filter(b => b.type === 'feel').length;
+  const resolved = allBuckets.filter(b => b.resolved).length;
+  const digested = allBuckets.filter(b => b.digested).length;
+  document.getElementById('stats').textContent =
+    total + ' 桶 · ' + pinned + ' 钉选 · ' + feels + ' feel · ' + resolved + ' 已解决 · ' + digested + ' 已消化';
+}
+
+function buildFilters() {
+  const domains = new Set();
+  allBuckets.forEach(b => (b.domain || []).forEach(d => domains.add(d)));
+  const filters = document.getElementById('filters');
+  const types = [
+    { key: 'all', label: '全部' },
+    { key: 'pinned', label: '📌 钉选' },
+    { key: 'feel', label: '🫧 Feel' },
+    { key: 'unresolved', label: '⚡ 未解决' },
+    { key: 'digested', label: '🌿 已消化' },
+    { key: 'archived', label: '📦 归档' },
+  ];
+  filters.innerHTML = types.map(function(t) {
+    return '<button class="filter-btn ' + (t.key === 'all' ? 'active' : '') + '" data-filter="' + t.key + '">' + t.label + '</button>';
+  }).join('') + Array.from(domains).slice(0, 10).map(function(d) {
+    return '<button class="filter-btn" data-filter="domain:' + d + '">' + d + '</button>';
+  }).join('');
+
+  filters.addEventListener('click', function(e) {
+    var btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    filters.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderBuckets(filterBuckets(allBuckets));
+  });
+}
+
+function filterBuckets(buckets) {
+  if (currentFilter === 'all') return buckets;
+  if (currentFilter === 'pinned') return buckets.filter(function(b) { return b.pinned; });
+  if (currentFilter === 'feel') return buckets.filter(function(b) { return b.type === 'feel'; });
+  if (currentFilter === 'unresolved') return buckets.filter(function(b) { return !b.resolved && b.type !== 'permanent' && !b.pinned; });
+  if (currentFilter === 'digested') return buckets.filter(function(b) { return b.digested; });
+  if (currentFilter === 'archived') return buckets.filter(function(b) { return b.type === 'archived' || b.score < 0.3; });
+  if (currentFilter.startsWith('domain:')) {
+    var d = currentFilter.slice(7);
+    return buckets.filter(function(b) { return (b.domain || []).includes(d); });
+  }
+  return buckets;
+}
+
+function renderBuckets(buckets) {
+  var list = document.getElementById('bucket-list');
+  if (!buckets.length) {
+    list.innerHTML = '<div class="loading">没有记忆桶</div>';
+    return;
+  }
+  list.innerHTML = buckets.map(function(b) {
+    var icon = b.pinned ? '📌' : b.type === 'feel' ? '🫧' : b.digested ? '🌿' : b.resolved ? '💤' : '💭';
+    var vPos = Math.round(b.valence * 100);
+    var modelV = b.model_valence != null ? ' → V' + b.model_valence.toFixed(1) : '';
+    var timeAgo = formatTimeAgo(b.last_active || b.created);
+    return '<div class="bucket-row" onclick="showDetail(\'' + b.id + '\')">' +
+      '<span class="icon">' + icon + '</span>' +
+      '<span class="name" title="' + esc(b.name) + '">' + esc(b.name) + '</span>' +
+      '<span class="domain">' + (b.domain || []).join(', ') + '</span>' +
+      '<span class="emotion"><span class="v-bar"><span class="v-dot" style="left:' + vPos + '%"></span></span>' + modelV + '</span>' +
+      '<span class="score">' + b.score.toFixed(2) + '</span>' +
+      '<span class="time">' + timeAgo + '</span>' +
+      '<span class="preview">' + esc(b.content_preview) + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+async function searchBuckets(query) {
+  try {
+    var res = await fetch(BASE + '/api/search?q=' + encodeURIComponent(query));
+    var results = await res.json();
+    renderBuckets(results);
+  } catch (e) {
+    console.error('Search failed:', e);
+  }
+}
+
+async function showDetail(id) {
+  var panel = document.getElementById('detail-panel');
+  var content = document.getElementById('detail-content');
+  content.innerHTML = '<div class="loading">加载中…</div>';
+  panel.classList.add('open');
+
+  try {
+    var res = await fetch(BASE + '/api/bucket/' + id);
+    var b = await res.json();
+    var meta = b.metadata || {};
+    content.innerHTML =
+      '<h2>' + esc(meta.name || id) + '</h2>' +
+      '<div class="detail-meta">' +
+        '<div class="field"><label>ID</label>' + id + '</div>' +
+        '<div class="field"><label>类型</label>' + (meta.type || 'dynamic') + '</div>' +
+        '<div class="field"><label>域</label>' + (meta.domain || []).join(', ') + '</div>' +
+        '<div class="field"><label>标签</label>' + (meta.tags || []).join(', ') + '</div>' +
+        '<div class="field"><label>事件效价</label>V' + (meta.valence || 0.5).toFixed(2) + '</div>' +
+        '<div class="field"><label>唤醒度</label>A' + (meta.arousal || 0.3).toFixed(2) + '</div>' +
+        '<div class="field"><label>模型视角</label>' + (meta.model_valence != null ? 'V' + meta.model_valence.toFixed(2) : '—') + '</div>' +
+        '<div class="field"><label>重要度</label>' + (meta.importance || 5) + '/10</div>' +
+        '<div class="field"><label>权重分</label>' + b.score.toFixed(4) + '</div>' +
+        '<div class="field"><label>激活次数</label>' + (meta.activation_count || 1) + '</div>' +
+        '<div class="field"><label>已解决</label>' + (meta.resolved ? '✓' : '—') + '</div>' +
+        '<div class="field"><label>已消化</label>' + (meta.digested ? '✓' : '—') + '</div>' +
+        '<div class="field"><label>钉选</label>' + (meta.pinned ? '✓' : '—') + '</div>' +
+        '<div class="field"><label>创建</label>' + (meta.created || '—') + '</div>' +
+        '<div class="field"><label>最后活跃</label>' + (meta.last_active || '—') + '</div>' +
+      '</div>' +
+      '<div class="detail-content">' + esc(b.content) + '</div>';
+  } catch (e) {
+    content.innerHTML = '<div class="loading">加载失败: ' + e.message + '</div>';
+  }
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+}
+
+var networkData = null;
+async function loadNetwork() {
+  var canvas = document.getElementById('network-canvas');
+  var ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  var W = canvas.offsetWidth, H = canvas.offsetHeight;
+
+  ctx.fillStyle = '#FDFCF0';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#8A8070';
+  ctx.font = '14px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('加载记忆网络…', W/2, H/2);
+
+  try {
+    var res = await fetch(BASE + '/api/network');
+    networkData = await res.json();
+    drawNetwork(ctx, W, H, networkData);
+  } catch(e) {
+    ctx.fillText('加载失败: ' + e.message, W/2, H/2 + 24);
+  }
+}
+
+function drawNetwork(ctx, W, H, data) {
+  var nodes = data.nodes, edges = data.edges;
+  if (!nodes.length) {
+    ctx.fillStyle = '#8A8070';
+    ctx.fillText('没有记忆桶', W/2, H/2);
+    return;
+  }
+
+  var positions = {};
+  var cx = W / 2, cy = H / 2;
+  nodes.forEach(function(n, i) {
+    var angle = (i / nodes.length) * Math.PI * 2;
+    var r = Math.min(W, H) * 0.35;
+    positions[n.id] = {
+      x: cx + Math.cos(angle) * r + (Math.random() - 0.5) * 50,
+      y: cy + Math.sin(angle) * r + (Math.random() - 0.5) * 50,
+    };
+  });
+
+  var edgeMap = {};
+  edges.forEach(function(e) {
+    if (!edgeMap[e.source]) edgeMap[e.source] = [];
+    if (!edgeMap[e.target]) edgeMap[e.target] = [];
+    edgeMap[e.source].push(e.target);
+    edgeMap[e.target].push(e.source);
+  });
+
+  for (var iter = 0; iter < 80; iter++) {
+    for (var i = 0; i < nodes.length; i++) {
+      for (var j = i + 1; j < nodes.length; j++) {
+        var a = positions[nodes[i].id], b = positions[nodes[j].id];
+        var dx = b.x - a.x, dy = b.y - a.y;
+        var dist = Math.max(1, Math.sqrt(dx*dx + dy*dy));
+        var force = 800 / (dist * dist);
+        dx = (dx / dist) * force;
+        dy = (dy / dist) * force;
+        a.x -= dx; a.y -= dy;
+        b.x += dx; b.y += dy;
+      }
+    }
+    edges.forEach(function(e) {
+      var a = positions[e.source], b = positions[e.target];
+      if (!a || !b) return;
+      var dx = b.x - a.x, dy = b.y - a.y;
+      var dist = Math.sqrt(dx*dx + dy*dy);
+      var force = (dist - 100) * 0.01 * (e.similarity || 0.5);
+      dx = (dx / Math.max(1,dist)) * force;
+      dy = (dy / Math.max(1,dist)) * force;
+      a.x += dx; a.y += dy;
+      b.x -= dx; b.y -= dy;
+    });
+    nodes.forEach(function(n) {
+      var p = positions[n.id];
+      p.x += (cx - p.x) * 0.01;
+      p.y += (cy - p.y) * 0.01;
+    });
+  }
+
+  ctx.fillStyle = '#FDFCF0';
+  ctx.fillRect(0, 0, W, H);
+
+  edges.forEach(function(e) {
+    var a = positions[e.source], b = positions[e.target];
+    if (!a || !b) return;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = 'rgba(47, 79, 79, ' + (e.similarity * 0.35) + ')';
+    ctx.lineWidth = Math.max(0.5, e.similarity * 2);
+    ctx.stroke();
+  });
+
+  var colors = { dynamic: '#2F4F4F', permanent: '#9A7B4F', feel: '#8B6A6A', archived: '#B0A590' };
+  nodes.forEach(function(n) {
+    var p = positions[n.id];
+    var r = Math.max(4, Math.min(14, n.score * 0.8));
+    var color = colors[n.type] || '#2F4F4F';
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r + 4, 0, Math.PI * 2);
+    ctx.fillStyle = color + '15';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = n.resolved ? color + '70' : color;
+    ctx.fill();
+
+    if (n.pinned) {
+      ctx.strokeStyle = '#9A7B4F';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    var name = n.name.length > 10 ? n.name.slice(0, 10) + '…' : n.name;
+    ctx.fillStyle = '#3A3530';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(name, p.x, p.y + r + 14);
+  });
+}
+
+function esc(s) {
+  if (!s) return '';
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function formatTimeAgo(iso) {
+  if (!iso) return '—';
+  var d = new Date(iso);
+  var now = new Date();
+  var hours = Math.floor((now - d) / 3600000);
+  if (hours < 1) return '刚刚';
+  if (hours < 24) return hours + 'h前';
+  var days = Math.floor(hours / 24);
+  if (days < 30) return days + 'd前';
+  return Math.floor(days/30) + 'mo前';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeDetail();
+  if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    document.getElementById('search-input').focus();
+  }
+});
+
+async function runBreathDebug() {
+  var query = document.getElementById('breath-query').value.trim();
+  var valence = document.getElementById('breath-valence').value;
+  var arousal = document.getElementById('breath-arousal').value;
+  var results = document.getElementById('breath-results');
+  var info = document.getElementById('breath-info');
+
+  results.innerHTML = '<div class="loading">计算中…</div>';
+
+  var url = BASE + '/api/breath-debug?q=' + encodeURIComponent(query);
+  if (valence) url += '&valence=' + valence;
+  if (arousal) url += '&arousal=' + arousal;
+
+  try {
+    var res = await fetch(url);
+    var data = await res.json();
+
+    document.getElementById('fs-input').classList.add('active');
+    document.getElementById('fs-cand-n').textContent = data.total_candidates + ' 桶';
+    document.getElementById('fs-candidates').classList.add('active');
+    document.getElementById('fs-scoring').classList.add('active');
+    document.getElementById('fs-thresh-n').textContent = '≥' + data.threshold + ' → ' + data.passed_count + ' 通过';
+    document.getElementById('fs-threshold').classList.add('active');
+    document.getElementById('fs-sort').classList.add('active');
+
+    var w = data.weights;
+    info.style.display = '';
+    info.innerHTML =
+      '<strong>权重配置</strong>&nbsp;' +
+      'topic=<code>' + w.topic + '</code> emotion=<code>' + w.emotion + '</code> ' +
+      'time=<code>' + w.time + '</code> importance=<code>' + w.importance + '</code>' +
+      ' &nbsp;|&nbsp; 阈值=<code>' + data.threshold + '</code>' +
+      ' &nbsp;|&nbsp; 候选=<code>' + data.total_candidates + '</code> 桶' +
+      ' → 通过=<code>' + data.passed_count + '</code> 桶' +
+      (query ? '' : ' &nbsp;|&nbsp; <em>未输入 query，topic 分数全为 0</em>');
+
+    if (!data.results.length) {
+      results.innerHTML = '<div class="loading">无结果</div>';
+      return;
+    }
+
+    var barColors = {
+      topic: '#2F4F4F',
+      emotion: '#8B6A6A',
+      time: '#9A7B4F',
+      importance: '#4A7C59',
+    };
+
+    results.innerHTML = data.results.map(function(r, i) {
+      var s = r.scores;
+      var passed = r.passed_threshold;
+      var icon = r.pinned ? '📌' : r.resolved ? '💤' : r.type === 'feel' ? '🫧' : '💭';
+      var bars = Object.entries(s).map(function(entry) {
+        var key = entry[0], val = entry[1];
+        var pct = Math.round(val * 100);
+        var wt = r.weights[key];
+        return '<div class="score-bar-group">' +
+          '<div class="score-bar-label"><span>' + key + '×' + wt + '</span><span>' + val.toFixed(2) + '</span></div>' +
+          '<div class="score-bar-track">' +
+            '<div class="score-bar-fill" style="width:' + pct + '%;background:' + barColors[key] + '"></div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      return '<div class="score-row" title="' + esc(r.name) + '">' +
+        '<span class="rank">' + (i < 9 ? '0' : '') + (i + 1) + '</span>' +
+        '<span class="name">' + icon + ' ' + esc(r.name) + '</span>' +
+        '<div class="score-bars">' + bars + '</div>' +
+        '<span class="score-final ' + (passed ? 'score-pass' : 'score-fail') + '">' + r.normalized.toFixed(1) + (r.resolved ? '<small>×0.3</small>' : '') + '</span>' +
+      '</div>';
+    }).join('');
+  } catch (e) {
+    results.innerHTML = '<div class="loading">请求失败: ' + e.message + '</div>';
+  }
+}
+
+document.getElementById('breath-query').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') runBreathDebug();
+});
+
+async function loadConfig() {
+  try {
+    var res = await fetch(BASE + '/api/config');
+    var cfg = await res.json();
+    document.getElementById('cfg-dehy-model').value = cfg.dehydration.model || '';
+    document.getElementById('cfg-dehy-url').value = cfg.dehydration.base_url || '';
+    document.getElementById('cfg-dehy-key').placeholder = '当前: ' + (cfg.dehydration.api_key_masked || '未设置');
+    document.getElementById('cfg-dehy-key').value = '';
+    document.getElementById('cfg-dehy-maxtokens').value = cfg.dehydration.max_tokens || 1024;
+    document.getElementById('cfg-dehy-temp').value = cfg.dehydration.temperature || 0.1;
+    document.getElementById('cfg-emb-enabled').value = cfg.embedding.enabled ? 'true' : 'false';
+    document.getElementById('cfg-emb-model').value = cfg.embedding.model || '';
+    document.getElementById('cfg-merge').value = cfg.merge_threshold || 75;
+    document.getElementById('config-readonly').innerHTML =
+      'Transport: <strong>' + cfg.transport + '</strong><br>Buckets dir: <strong>' + cfg.buckets_dir + '</strong>';
+  } catch (e) {
+    document.getElementById('config-status').innerHTML =
+      '<span style="color:var(--negative)">加载失败: ' + e.message + '</span>';
+  }
+}
+
+async function saveConfig(persist) {
+  var body = {
+    dehydration: {
+      model: document.getElementById('cfg-dehy-model').value,
+      base_url: document.getElementById('cfg-dehy-url').value,
+      max_tokens: parseInt(document.getElementById('cfg-dehy-maxtokens').value) || 1024,
+      temperature: parseFloat(document.getElementById('cfg-dehy-temp').value) || 0.1,
+    },
+    embedding: {
+      enabled: document.getElementById('cfg-emb-enabled').value === 'true',
+      model: document.getElementById('cfg-emb-model').value,
+    },
+    merge_threshold: parseInt(document.getElementById('cfg-merge').value) || 75,
+    persist: persist,
+  };
+  var keyVal = document.getElementById('cfg-dehy-key').value;
+  if (keyVal) body.dehydration.api_key = keyVal;
+
+  var status = document.getElementById('config-status');
+  try {
+    var res = await fetch(BASE + '/api/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    var result = await res.json();
+    if (result.ok) {
+      status.innerHTML = '<span style="color:var(--positive)">✓ 已更新: ' + result.updated.join(', ') + '</span>';
+      loadConfig();
+    } else {
+      status.innerHTML = '<span style="color:var(--negative)">✗ ' + (result.error || '未知错误') + '</span>';
+    }
+  } catch (e) {
+    status.innerHTML = '<span style="color:var(--negative)">✗ 请求失败: ' + e.message + '</span>';
+  }
+}
+
+checkAuth().then(() => loadBuckets());
+
+// --- Import functions ---
+const uploadZone = document.getElementById('import-upload-zone');
+const fileInput = document.getElementById('import-file-input');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = 'var(--accent)'; });
+uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = 'var(--border)'; });
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.style.borderColor = 'var(--border)';
+  if (e.dataTransfer.files.length) startImport(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files.length) startImport(fileInput.files[0]); });
+
+async function startImport(file) {
+  const preserveRaw = document.getElementById('import-preserve-raw').checked;
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const res = await fetch(BASE + '/api/import/upload?preserve_raw=' + (preserveRaw ? '1' : '0'), { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) { alert('导入失败: ' + data.error); return; }
+    document.getElementById('import-progress').style.display = '';
+    document.getElementById('import-pause-btn').style.display = '';
+    pollImportStatus();
+  } catch (e) { alert('上传失败: ' + e.message); }
+}
+
+let importPollTimer;
+async function pollImportStatus() {
+  clearInterval(importPollTimer);
+  try {
+    const res = await fetch(BASE + '/api/import/status');
+    const s = await res.json();
+    updateImportUI(s);
+    if (s.status === 'running') {
+      importPollTimer = setInterval(async () => {
+        try {
+          const r2 = await fetch(BASE + '/api/import/status');
+          updateImportUI(await r2.json());
+        } catch(e) {}
+      }, 2000);
+    }
+  } catch(e) {}
+}
+
+function updateImportUI(s) {
+  const prog = document.getElementById('import-progress');
+  if (s.status === 'idle') { prog.style.display = 'none'; return; }
+  prog.style.display = '';
+  const pct = s.total_chunks ? Math.round(s.processed / s.total_chunks * 100) : 0;
+  document.getElementById('import-progress-bar').style.width = pct + '%';
+  document.getElementById('import-progress-text').textContent = s.processed + '/' + s.total_chunks;
+  document.getElementById('import-api-calls').textContent = s.api_calls;
+  document.getElementById('import-created').textContent = s.memories_created;
+  document.getElementById('import-merged').textContent = s.memories_merged;
+  document.getElementById('import-raw').textContent = s.memories_raw;
+  const statusMap = { running: '⏳ 导入中…', paused: '⏸ 已暂停', completed: '✅ 完成', error: '❌ 出错' };
+  document.getElementById('import-status-text').textContent = statusMap[s.status] || s.status;
+  document.getElementById('import-pause-btn').style.display = s.status === 'running' ? '' : 'none';
+  if (s.status !== 'running') clearInterval(importPollTimer);
+  if (s.status === 'completed') loadImportResults();
+  const errDiv = document.getElementById('import-errors');
+  if (s.errors && s.errors.length) {
+    errDiv.style.display = '';
+    errDiv.textContent = s.errors.join('\n');
+  } else { errDiv.style.display = 'none'; }
+}
+
+async function pauseImport() {
+  try { await fetch(BASE + '/api/import/pause', { method: 'POST' }); } catch(e) {}
+}
+
+async function loadImportResults() {
+  const container = document.getElementById('import-results-list');
+  container.innerHTML = '<div class="loading">加载中…</div>';
+  try {
+    const res = await fetch(BASE + '/api/import/results?limit=30');
+    const data = await res.json();
+    if (!data.buckets || !data.buckets.length) {
+      container.innerHTML = '<p style="color:var(--text-dim)">暂无记忆桶</p>';
+      return;
+    }
+    container.innerHTML = data.buckets.map(b => `
+      <div id="ir-${b.id}" style="background:var(--surface);border-radius:12px;padding:14px;margin:8px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <b>${b.name || b.id}</b>
+          <span style="font-size:11px;color:var(--text-dim);">${b.type} | ${(b.domain||[]).join(',')} | imp:${b.importance}</span>
+        </div>
+        <p style="font-size:13px;margin:6px 0;white-space:pre-wrap;">${b.content}</p>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">${(b.tags||[]).map(t=>'#'+t).join(' ')}</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="reviewAction('${b.id}','pin')" title="固定为永久记忆">📌 固定</button>
+          <button onclick="reviewAction('${b.id}','important')" title="标为重要">⭐ 重要</button>
+          <button onclick="reviewAction('${b.id}','noise')" title="标为噪声并resolve">🗑 噪声</button>
+          <button onclick="if(confirm('确定删除？'))reviewAction('${b.id}','delete')" title="彻底删除" style="color:var(--negative);">✕ 删除</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { container.innerHTML = '<p style="color:var(--negative)">加载失败: ' + e.message + '</p>'; }
+}
+
+async function detectPatterns() {
+  const container = document.getElementById('import-patterns');
+  container.innerHTML = '<div class="loading">检测中…</div>';
+  try {
+    const res = await fetch(BASE + '/api/import/patterns');
+    const data = await res.json();
+    if (!data.patterns || !data.patterns.length) { container.innerHTML = '<p style="color:var(--text-dim)">未检测到高频模式</p>'; return; }
+    container.innerHTML = data.patterns.map(p => `
+      <div style="background:var(--surface);border-radius:12px;padding:14px;margin:8px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <b>${p.pattern_name}</b>
+          <span style="font-size:12px;color:var(--text-dim);">出现 ${p.count} 次</span>
+        </div>
+        <p style="font-size:13px;margin:6px 0;">${p.pattern_content}</p>
+        <div style="display:flex;gap:8px;">
+          <button onclick="reviewAction('${p.bucket_ids[0]}','pin')">📌 固定</button>
+          <button onclick="reviewAction('${p.bucket_ids[0]}','important')">⭐ 重要</button>
+          <button onclick="batchReview('${JSON.stringify(p.bucket_ids).replace(/'/g, "\\'").replace(/"/g, '&quot;')}','noise')">🗑 噪声</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { container.innerHTML = '<p style="color:var(--negative)">检测失败: ' + e.message + '</p>'; }
+}
+
+async function reviewAction(bid, action) {
+  try {
+    await fetch(BASE + '/api/import/review', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ decisions: [{ bucket_id: bid, action }] })
+    });
+    // Remove card from UI
+    const card = document.getElementById('ir-' + bid);
+    if (card) card.style.display = 'none';
+  } catch(e) {}
+}
+
+async function batchReview(idsJson, action) {
+  try {
+    const ids = JSON.parse(idsJson);
+    await fetch(BASE + '/api/import/review', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ decisions: ids.map(id => ({ bucket_id: id, action })) })
+    });
+    detectPatterns();
+  } catch(e) {}
+}
+</script>
+</body>
+</html>
