@@ -1309,7 +1309,23 @@ async def api_trigger_backup(request):
     err = _require_auth(request)
     if err:
         return err
+@mcp.custom_route("/api/backup", methods=["POST"])
+async def api_trigger_backup(request):
+    """手动触发备份：需要提供 secret 参数（与 BACKUP_SECRET 环境变量一致）"""
+    from starlette.responses import JSONResponse
+    import os, time, tarfile, base64
+    from io import BytesIO
 
+    # 密钥验证（可选，建议开启）
+    secret = request.query_params.get("secret", "")
+    expected_secret = os.environ.get("BACKUP_SECRET", "")
+    if expected_secret and secret != expected_secret:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    # 以下为原有备份代码...
+    repo = os.environ.get("GITHUB_BACKUP_REPO", "")
+    token = os.environ.get("GITHUB_TOKEN", "")
+    # ... 省略，保持之前的内容不变
     repo = os.environ.get("GITHUB_BACKUP_REPO", "")   # 例如 "yourname/ombre-backup"
     token = os.environ.get("GITHUB_TOKEN", "")
     if not repo or not token:
