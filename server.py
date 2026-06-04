@@ -1291,16 +1291,8 @@ async def get_pinned(bucket_id: str) -> str:
         result += f"**内容**:\n{content}\n"
         return result
 # =============================================================
-# Backup endpoint: upload buckets backup to GitHub via API (no git)
-# 备份端点：通过 GitHub API 直接上传备份文件（无需 git）
-# =============================================================
-import tarfile
-import base64
-from io import BytesIO
-
 # =============================================================
 # Backup endpoint: upload buckets backup to GitHub via API (no git)
-# 备份端点：通过 GitHub API 直接上传备份文件（无需 git）
 # =============================================================
 import tarfile
 import base64
@@ -1311,7 +1303,6 @@ async def api_trigger_backup(request):
     """手动触发备份：需要提供 secret 参数（与 BACKUP_SECRET 环境变量一致）"""
     from starlette.responses import JSONResponse
     import os, time
-    from pathlib import Path
 
     # 密钥验证（通过 URL 参数 ?secret=xxx）
     secret = request.query_params.get("secret", "")
@@ -1362,7 +1353,6 @@ async def api_trigger_backup(request):
         if sha:
             payload["sha"] = sha
         else:
-            # 如果是首次上传，指定分支（默认 main）
             payload["branch"] = "main"
 
         response = await client.put(api_url, headers=headers, json=payload)
@@ -1378,66 +1368,6 @@ async def api_trigger_backup(request):
             return JSONResponse({
                 "error": f"GitHub API 错误: {response.status_code}",
                 "detail": response.text
-            }, status_code=500)
-    # 备份文件路径（在 GitHub 仓库中的路径）
-    backup_path = "buckets_backup.tar.gz"
-    api_url = f"https://api.github.com/repos/{repo}/contents/{backup_path}"
-
-    # 1. 在内存中打包 /app/buckets
-    buffer = BytesIO()
-    try:
-        with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
-            tar.add("/app/buckets", arcname="buckets")
-        buffer.seek(0)
-        content = buffer.read()
-        size = len(content)
-    except Exception as e:
-        return JSONResponse({"error": f"打包失败: {str(e)}"}, status_code=500)
-
-    # 2. Base64 编码
-    encoded = base64.b64encode(content).decode("utf-8")
-
-    # 3. 准备请求数据（获取当前文件的 SHA，如果已存在）
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/vnd.github.v3+json",
-    }
-
-    sha = None
-    async with httpx.AsyncClient() as client:
-        # 先尝试获取现有文件信息（用于更新）
-        try:
-            resp = await client.get(api_url, headers=headers)
-            if resp.status_code == 200:
-                sha = resp.json().get("sha")
-        except Exception:
-            pass
-
-        # 构造上传 payload
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
-        payload = {
-            "message": f"Backup from Ombre-Brain on {timestamp}",
-            "content": encoded,
-            "branch": "main" if not sha else None,  # 如果仓库默认分支不是 main，可能需要调整
-        }
-        if sha:
-            payload["sha"] = sha
-
-        # 执行上传
-        response = await client.put(api_url, headers=headers, json=payload)
-
-        if response.status_code in (200, 201):
-            return JSONResponse({
-                "status": "success",
-                "size_bytes": size,
-                "repo": repo,
-                "file": backup_path,
-            })
-        else:
-            error_detail = response.text
-            return JSONResponse({
-                "error": f"GitHub API 返回错误: {response.status_code}",
-                "detail": error_detail
             }, status_code=500)
 # =============================================================
 # Dashboard API endpoints (for lightweight Web UI)
