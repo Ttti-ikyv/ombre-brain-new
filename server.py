@@ -1260,9 +1260,8 @@ async def dream() -> str:
 # ... 上面是 dream 函数的结尾（return final_text 和 webhook）
 
 # =============================================================
-# Tool 7: get_pinned — Retrieve full content of a pinned bucket
-# 工具 7：get_pinned — 获取固化桶的完整内容
-# =============================================================
+# Tool 7: get_pinned - Retrieve full content of a pinned bucket
+# 工具 7: get_pinned - 获取固化桶的完整内容
 @mcp.tool()
 async def get_pinned(bucket_id: str) -> str:
     """获取指定固化桶（pinned bucket）的完整内容。用于读取不参与语义检索的固定记忆。"""
@@ -1279,7 +1278,7 @@ async def get_pinned(bucket_id: str) -> str:
         return f"桶 {bucket_id} 不是固化桶（pinned/protected），请使用其他工具读取。"
 
     content = bucket.get("content", "")
-    content = strip_wikilinks(content)   # 去除 wikilinks，保持和现有工具一致
+    content = strip_wikilinks(content)  # 去除 wikilinks，保持和现有工具一致
 
     result = f"**桶 ID**: {bucket_id}\n"
     result += f"**名称**: {meta.get('name', '无')}\n"
