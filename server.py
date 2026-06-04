@@ -1264,32 +1264,32 @@ async def dream() -> str:
 # 工具 7: get_pinned - 获取固化桶的完整内容
 @mcp.tool()
 async def get_pinned(bucket_id: str) -> str:
-    """获取指定固化桶（pinned bucket）的完整内容。用于读取不参与语义检索的固定记忆。"""
-    if not bucket_id or not bucket_id.strip():
-        return "错误：缺少 bucket_id 参数。"
-
-    bucket = await bucket_mgr.get(bucket_id)
-    if not bucket:
-        return f"未找到 ID 为 {bucket_id} 的桶。"
-
-    meta = bucket.get("metadata", {})
-    # 验证是否为固化桶（pinned 或 protected）
-    if not (meta.get("pinned") or meta.get("protected")):
-        return f"桶 {bucket_id} 不是固化桶（pinned/protected），请使用其他工具读取。"
-
-    content = bucket.get("content", "")
-    content = strip_wikilinks(content)  # 去除 wikilinks，保持和现有工具一致
-
-    result = f"**桶 ID**: {bucket_id}\n"
-    result += f"**名称**: {meta.get('name', '无')}\n"
-    result += f"**标签**: {', '.join(meta.get('tags', []))}\n"
-    result += f"**领域**: {', '.join(meta.get('domain', []))}\n"
-    result += f"**重要度**: {meta.get('importance', '?')}\n"
-    result += f"**情感**: V{meta.get('valence', 0.5):.1f}/A{meta.get('arousal', 0.3):.1f}\n"
-    result += f"**创建时间**: {meta.get('created', '未知')}\n"
-    result += f"**最后激活**: {meta.get('last_active', '未知')}\n"
-    result += f"**内容**:\n{content}\n"
-    return result
+        """获取指定固化桶（pinned bucket）的完整内容。用于读取不参与语义检索的固定记忆。"""
+        if not bucket_id or not bucket_id.strip():
+            return "错误：缺少 bucket_id 参数。"
+    
+        bucket = await bucket_mgr.get(bucket_id)
+        if not bucket:
+            return f"未找到 ID 为 {bucket_id} 的桶。"
+    
+        meta = bucket.get("metadata", {})
+        # 验证是否为固化桶（pinned 或 protected）
+        if not (meta.get("pinned") or meta.get("protected")):
+            return f"桶 {bucket_id} 不是固化桶（pinned/protected），请使用其他工具读取。"
+    
+        content = bucket.get("content", "")
+        content = strip_wikilinks(content)
+    
+        result = f"**桶 ID**: {bucket_id}\n"
+        result += f"**名称**: {meta.get('name', '无')}\n"
+        result += f"**标签**: {', '.join(meta.get('tags', []))}\n"
+        result += f"**领域**: {', '.join(meta.get('domain', []))}\n"
+        result += f"**重要度**: {meta.get('importance', '?')}\n"
+        result += f"**情感**: V{meta.get('valence', 0.5):.1f}/A{meta.get('arousal', 0.3):.1f}\n"
+        result += f"**创建时间**: {meta.get('created', '未知')}\n"
+        result += f"**最后激活**: {meta.get('last_active', '未知')}\n"
+        result += f"**内容**:\n{content}\n"
+        return result
 
 # =============================================================
 # Dashboard API endpoints (for lightweight Web UI)
